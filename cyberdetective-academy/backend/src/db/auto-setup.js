@@ -73,6 +73,25 @@ async function autoSetupDatabase() {
       console.log(`❌ NUCLEAR FIX FAILED: ${err.message}`);
     }
     
+    // Crear tabla users si no existe
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          password VARCHAR(255) NOT NULL,
+          points INTEGER DEFAULT 0,
+          level VARCHAR(50) DEFAULT 'Detective Junior',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('✅ Tabla users creada');
+    } catch (err) {
+      console.log(`⚠️  users table: ${err.message}`);
+    }
+    
     console.log('🎉 Setup automático completado');
     
   } catch (error) {
