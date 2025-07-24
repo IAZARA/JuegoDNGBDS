@@ -30,6 +30,15 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Health check route for Railway
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'CyberDetective Academy API funcionando', 
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/exercises', require('./routes/exercises.routes'));
 app.use('/api/users', require('./routes/users.routes'));
