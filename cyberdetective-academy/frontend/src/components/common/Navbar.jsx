@@ -1,11 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import api from '../../services/api';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [teamsEnabled, setTeamsEnabled] = useState(true);
+
+  useEffect(() => {
+    checkTeamsStatus();
+  }, []);
+
+  const checkTeamsStatus = async () => {
+    try {
+      const response = await api.get('/public/teams-enabled');
+      setTeamsEnabled(response.data.teamsEnabled);
+    } catch (error) {
+      console.error('Error checking teams status:', error);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -64,13 +79,15 @@ const Navbar = () => {
           >
             🏆 Ranking
           </Link>
-          <Link 
-            to="/teams" 
-            className={`navbar-link ${isActive('/teams') ? 'active' : ''}`}
-            onClick={closeMobileMenu}
-          >
-            👥 Mi Equipo
-          </Link>
+          {teamsEnabled && (
+            <Link 
+              to="/teams" 
+              className={`navbar-link ${isActive('/teams') ? 'active' : ''}`}
+              onClick={closeMobileMenu}
+            >
+              👥 Mi Equipo
+            </Link>
+          )}
           
           <div className="navbar-user-mobile">
             <div className="user-info">

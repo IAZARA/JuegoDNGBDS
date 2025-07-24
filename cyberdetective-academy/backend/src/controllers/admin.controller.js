@@ -259,6 +259,70 @@ const adminController = {
     }
   },
 
+  async toggleTeams(req, res) {
+    try {
+      const { enabled } = req.body;
+      
+      if (typeof enabled !== 'boolean') {
+        return res.status(400).json({ 
+          message: 'El parámetro "enabled" debe ser un booleano' 
+        });
+      }
+      
+      // Actualizar el estado de los equipos
+      const result = await db.query(`
+        UPDATE game_state 
+        SET teams_enabled = $1,
+            updated_at = CURRENT_TIMESTAMP
+        RETURNING teams_enabled
+      `, [enabled]);
+      
+      if (result.rows.length === 0) {
+        return res.status(500).json({ 
+          message: 'No se pudo actualizar el estado del juego' 
+        });
+      }
+      
+      // Emitir evento Socket.io para notificar a todos los clientes
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('teamsStatusChanged', {
+          teamsEnabled: enabled,
+          timestamp: new Date()
+        });
+      }
+      
+      res.json({
+        message: enabled ? 'Equipos habilitados' : 'Equipos deshabilitados',
+        teamsEnabled: result.rows[0].teams_enabled
+      });
+      
+    } catch (error) {
+      console.error('Error cambiando estado de equipos:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  },
+
+  async getTeamsStatus(req, res) {
+    try {
+      const result = await db.query('SELECT teams_enabled FROM game_state LIMIT 1');
+      
+      if (result.rows.length === 0) {
+        return res.status(500).json({ 
+          message: 'No se encontró el estado del juego' 
+        });
+      }
+      
+      res.json({
+        teamsEnabled: result.rows[0].teams_enabled
+      });
+      
+    } catch (error) {
+      console.error('Error obteniendo estado de equipos:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  },
+
   async getPresenterGuide(req, res) {
     try {
       const { category, difficulty, search } = req.query;

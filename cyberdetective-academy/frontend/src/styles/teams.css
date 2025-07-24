@@ -28,6 +28,39 @@
   margin-bottom: 0;
 }
 
+/* Teams disabled message */
+.teams-disabled {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: #fef3f2;
+  border: 2px solid #fed7d7;
+  border-radius: 12px;
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
+.teams-disabled-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.teams-disabled h2 {
+  color: #e53e3e;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+}
+
+.teams-disabled p {
+  color: #718096;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
 /* ============= TABS SYSTEM ============= */
 .team-tabs, .ranking-tabs {
   display: flex;

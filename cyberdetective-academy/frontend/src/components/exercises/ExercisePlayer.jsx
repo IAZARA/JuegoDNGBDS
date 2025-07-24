@@ -232,6 +232,13 @@ const ExercisePlayer = () => {
               </div>
             )}
             
+            {data.dataset_sample && (
+              <div className="data-display">
+                <h5>Muestra del Dataset:</h5>
+                <pre>{JSON.stringify(data.dataset_sample, null, 2)}</pre>
+              </div>
+            )}
+            
             {data.transaction && (
               <div className="data-display">
                 <h5>Registro de Transacción:</h5>
@@ -443,15 +450,26 @@ const ExercisePlayer = () => {
               </div>
             )}
             
+            {data.data_hints && (
+              <div className="hints-section">
+                <h5>💡 Pistas para el análisis:</h5>
+                <ul>
+                  {data.data_hints.map((hint, index) => (
+                    <li key={index}>{hint}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
             <div className="options-container">
               {data.options && data.options.map((option, index) => (
                 <button
                   key={index}
-                  className={`option-button ${answer === option ? 'selected' : ''}`}
-                  onClick={() => setAnswer(option)}
+                  className={`option-button ${answer === (typeof option === 'object' ? option.id : option) ? 'selected' : ''}`}
+                  onClick={() => setAnswer(typeof option === 'object' ? option.id : option)}
                   disabled={showResult}
                 >
-                  {option}
+                  {typeof option === 'object' ? `${option.id}) ${option.text}` : option}
                 </button>
               ))}
             </div>

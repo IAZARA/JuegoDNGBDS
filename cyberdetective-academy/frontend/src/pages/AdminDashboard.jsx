@@ -12,6 +12,7 @@ function AdminDashboard() {
   const [resetLink, setResetLink] = useState('');
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'guide'
+  const [teamsEnabled, setTeamsEnabled] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,6 +23,7 @@ function AdminDashboard() {
     }
 
     fetchStats();
+    fetchTeamsStatus();
   }, [navigate]);
 
   const fetchStats = async () => {
@@ -81,6 +83,37 @@ function AdminDashboard() {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(resetLink);
     toast.success('Link copiado al portapapeles');
+  };
+
+  const fetchTeamsStatus = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await api.get('/admin/teams-status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setTeamsEnabled(response.data.teamsEnabled);
+    } catch (error) {
+      console.error('Error obteniendo estado de equipos:', error);
+    }
+  };
+
+  const handleToggleTeams = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const newStatus = !teamsEnabled;
+      
+      const response = await api.post('/admin/toggle-teams', 
+        { enabled: newStatus },
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      
+      setTeamsEnabled(newStatus);
+      toast.success(response.data.message);
+    } catch (error) {
+      console.error('Error cambiando estado de equipos:', error);
+      toast.error('Error al cambiar estado de equipos');
+    }
   };
 
   const handleLogout = () => {
@@ -243,6 +276,35 @@ function AdminDashboard() {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Control de Equipos */}
+              <div className="admin-action-card">
+                <h3 className="admin-action-title">Control de Equipos</h3>
+                <p className="admin-action-description">
+                  Habilita o deshabilita la funcionalidad de equipos en el juego.
+                </p>
+                
+                <div className="admin-teams-control">
+                  <div className="admin-teams-status">
+                    Estado actual: <strong className={teamsEnabled ? 'text-success' : 'text-danger'}>
+                      {teamsEnabled ? 'Habilitado' : 'Deshabilitado'}
+                    </strong>
+                  </div>
+                  
+                  <button
+                    onClick={handleToggleTeams}
+                    className={`admin-btn admin-btn-full ${teamsEnabled ? 'admin-btn-danger' : 'admin-btn-success'}`}
+                  >
+                    {teamsEnabled ? 'Deshabilitar Equipos' : 'Habilitar Equipos'}
+                  </button>
+                  
+                  <p className="admin-teams-info">
+                    {teamsEnabled 
+                      ? '✅ Los usuarios pueden crear y unirse a equipos' 
+                      : '🚫 La pestaña de equipos está bloqueada para todos los usuarios'}
+                  </p>
+                </div>
               </div>
             </div>
           </>

@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import rankingService from '../services/rankingService';
 import TeamRanking from '../components/teams/TeamRanking';
 import toast from 'react-hot-toast';
+import api from '../services/api';
 
 const Leaderboard = () => {
   const { user } = useAuth();
@@ -11,10 +12,26 @@ const Leaderboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('individuals');
+  const [teamsEnabled, setTeamsEnabled] = useState(true);
 
   useEffect(() => {
+    checkTeamsStatus();
     loadLeaderboardData();
   }, []);
+
+  const checkTeamsStatus = async () => {
+    try {
+      const response = await api.get('/public/teams-enabled');
+      setTeamsEnabled(response.data.teamsEnabled);
+      
+      // Si los equipos están deshabilitados y el tab activo es 'teams', cambiar a 'individuals'
+      if (!response.data.teamsEnabled && activeTab === 'teams') {
+        setActiveTab('individuals');
+      }
+    } catch (error) {
+      console.error('Error checking teams status:', error);
+    }
+  };
 
   const loadLeaderboardData = async () => {
     try {
@@ -82,12 +99,14 @@ const Leaderboard = () => {
           >
             👤 Detectives
           </button>
-          <button 
-            className={`tab-button ${activeTab === 'teams' ? 'active' : ''}`}
-            onClick={() => setActiveTab('teams')}
-          >
-            👥 Equipos
-          </button>
+          {teamsEnabled && (
+            <button 
+              className={`tab-button ${activeTab === 'teams' ? 'active' : ''}`}
+              onClick={() => setActiveTab('teams')}
+            >
+              👥 Equipos
+            </button>
+          )}
         </div>
       </div>
 
@@ -225,7 +244,7 @@ const Leaderboard = () => {
         </>
       )}
 
-      {activeTab === 'teams' && (
+      {activeTab === 'teams' && teamsEnabled && (
         <TeamRanking />
       )}
     </div>
