@@ -45,6 +45,27 @@ async function autoSetupDatabase() {
       }
     }
     
+    // Asegurar system_config con teams_enabled
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS system_config (
+          id SERIAL PRIMARY KEY,
+          teams_enabled BOOLEAN DEFAULT true,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      
+      await pool.query(`
+        INSERT INTO system_config (id, teams_enabled) 
+        VALUES (1, true) 
+        ON CONFLICT (id) DO NOTHING
+      `);
+      
+      console.log('✅ system_config configurada');
+    } catch (err) {
+      console.log(`⚠️  system_config: ${err.message}`);
+    }
+    
     console.log('🎉 Setup automático completado');
     
   } catch (error) {
