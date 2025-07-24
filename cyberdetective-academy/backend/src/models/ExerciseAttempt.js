@@ -2,28 +2,42 @@ const db = require('../db/connection');
 
 class ExerciseAttempt {
   static async create({ userId, exerciseId, isCorrect, pointsEarned, timeTaken, hintsUsed, answerSubmitted }) {
-    // Primero verificamos si el usuario puede hacer más intentos
-    const canAttemptQuery = `SELECT can_attempt_exercise($1, $2) as can_attempt`;
-    const canAttemptResult = await db.query(canAttemptQuery, [userId, exerciseId]);
+    // Verificar si ya existe un intento para este usuario y ejercicio
+    const existingAttempt = await this.findByUserAndExercise(userId, exerciseId);
     
-    if (!canAttemptResult.rows[0].can_attempt) {
-      throw new Error('Ya no puedes hacer más intentos en este ejercicio o ya lo completaste correctamente');
+    if (existingAttempt.length > 0) {
+      // Si ya existe y fue correcto, no permitir otro intento
+      if (existingAttempt[0].is_correct) {
+        throw new Error('Ya completaste este ejercicio correctamente');
+      }
+      
+      // Si existe pero fue incorrecto, actualizar el intento existente
+      const updateQuery = `
+        UPDATE exercise_attempts 
+        SET completed_at = CURRENT_TIMESTAMP, 
+            is_correct = $3, 
+            points_earned = $4, 
+            time_taken = $5, 
+            hints_used = $6, 
+            answer_submitted = $7
+        WHERE user_id = $1 AND exercise_id = $2
+        RETURNING *
+      `;
+      
+      const values = [userId, exerciseId, isCorrect, pointsEarned, timeTaken, hintsUsed, answerSubmitted];
+      const result = await db.query(updateQuery, values);
+      return result.rows[0];
     }
 
-    // Obtener el siguiente número de intento
-    const nextAttemptQuery = `SELECT get_next_attempt_number($1, $2) as attempt_number`;
-    const nextAttemptResult = await db.query(nextAttemptQuery, [userId, exerciseId]);
-    const attemptNumber = nextAttemptResult.rows[0].attempt_number;
-
-    // Crear el nuevo intento
+    // Crear el nuevo intento si no existe
     const query = `
       INSERT INTO exercise_attempts 
-      (user_id, exercise_id, attempt_number, completed_at, is_correct, points_earned, time_taken, hints_used, answer_submitted)
-      VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, $5, $6, $7, $8)
+      (user_id, exercise_id, completed_at, is_correct, points_earned, time_taken, hints_used, answer_submitted)
+      VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5, $6, $7)
       RETURNING *
     `;
     
-    const values = [userId, exerciseId, attemptNumber, isCorrect, pointsEarned, timeTaken, hintsUsed, answerSubmitted];
+    const values = [userId, exerciseId, isCorrect, pointsEarned, timeTaken, hintsUsed, answerSubmitted];
     const result = await db.query(query, values);
     
     return result.rows[0];
@@ -46,7 +60,7 @@ class ExerciseAttempt {
     const query = `
       SELECT * FROM exercise_attempts 
       WHERE user_id = $1 AND exercise_id = $2
-      ORDER BY attempt_number DESC
+      ORDER BY completed_at DESC
     `;
     
     const result = await db.query(query, [userId, exerciseId]);
@@ -57,10 +71,7 @@ class ExerciseAttempt {
     const query = `
       SELECT 
         COUNT(*) as total_attempts,
-        MAX(attempt_number) as last_attempt,
-        3 - COUNT(*) as remaining_attempts,
-        bool_or(is_correct) as has_completed,
-        can_attempt_exercise($1, $2) as can_attempt
+        COALESCE(bool_or(is_correct), false) as has_completed
       FROM exercise_attempts 
       WHERE user_id = $1 AND exercise_id = $2
     `;
@@ -72,8 +83,7 @@ class ExerciseAttempt {
     if (info.total_attempts === '0') {
       return {
         total_attempts: 0,
-        last_attempt: 0,
-        remaining_attempts: 3,
+        remaining_attempts: 1,
         has_completed: false,
         can_attempt: true
       };
@@ -81,10 +91,9 @@ class ExerciseAttempt {
     
     return {
       total_attempts: parseInt(info.total_attempts),
-      last_attempt: parseInt(info.last_attempt),
-      remaining_attempts: Math.max(0, parseInt(info.remaining_attempts)),
+      remaining_attempts: info.has_completed ? 0 : 1,
       has_completed: info.has_completed,
-      can_attempt: info.can_attempt
+      can_attempt: !info.has_completed
     };
   }
   

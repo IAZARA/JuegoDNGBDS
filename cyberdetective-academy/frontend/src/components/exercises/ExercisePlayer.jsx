@@ -642,44 +642,6 @@ const ExercisePlayer = () => {
               </div>
             )}
 
-            {data.communication_network && (
-              <div className="data-display">
-                <h5>📡 Red de Comunicación:</h5>
-                {data.communication_network.nodes && (
-                  <div className="network-nodes">
-                    <h6>Nodos de la Red:</h6>
-                    <div className="nodes-grid">
-                      {data.communication_network.nodes.map((node, index) => (
-                        <div key={index} className="node-card">
-                          <h6>{node.id}</h6>
-                          {node.connections && <p><strong>Conexiones:</strong> {node.connections}</p>}
-                          {node.suspicious_activity && <p><strong>Actividad Sospechosa:</strong> {node.suspicious_activity}</p>}
-                          {node.type && <p><strong>Tipo:</strong> {node.type}</p>}
-                          {node.location && <p><strong>Ubicación:</strong> {node.location}</p>}
-                          {node.status && <p><strong>Estado:</strong> {node.status}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {data.communication_network.connections && (
-                  <div className="network-connections">
-                    <h6>Conexiones:</h6>
-                    <div className="connections-list">
-                      {data.communication_network.connections.map((conn, index) => (
-                        <div key={index} className="connection-item">
-                          <p><strong>{conn.from}</strong> → <strong>{conn.to}</strong></p>
-                          {conn.frequency && <p>Frecuencia: {conn.frequency}</p>}
-                          {conn.encrypted && <p className="encrypted">🔒 Encriptado</p>}
-                          {conn.strength && <p>Fuerza: {conn.strength}</p>}
-                          {conn.type && <p>Tipo: {conn.type}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
 
             {data.crime_sequence && (
               <div className="data-display">
@@ -784,6 +746,86 @@ const ExercisePlayer = () => {
                 </table>
               </div>
             )}
+
+            {data.crime_scenes && (
+              <div className="data-display">
+                <h5>🏠 Escenas del Crimen:</h5>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Crimen</th>
+                      <th>Método</th>
+                      <th>Hora</th>
+                      <th>Objetos Robados</th>
+                      <th>Evidencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.crime_scenes.map((scene, index) => (
+                      <tr key={index}>
+                        <td><strong>{scene.id}</strong></td>
+                        <td>{scene.crime}</td>
+                        <td>{scene.method}</td>
+                        <td>{scene.time}</td>
+                        <td>{scene.items}</td>
+                        <td>{scene.evidence}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {data.communication_network && (
+              <div className="data-display">
+                <h5>📡 Análisis de Red de Comunicaciones:</h5>
+                <div className="network-instructions">
+                  <p><strong>📋 Instrucciones de análisis:</strong></p>
+                  <ul>
+                    <li><strong>Líder:</strong> Muchos contactos locales + Pocos/cero llamadas internacionales (evita detección)</li>
+                    <li><strong>Operativos:</strong> Muchas llamadas internacionales (coordinación con otras células)</li>
+                    <li><strong>Cifrado:</strong> Indica actividad sospechosa (mayor número = más sospechoso)</li>
+                  </ul>
+                </div>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Nodo</th>
+                      <th>Contactos Locales</th>
+                      <th>Mensajes Cifrados</th>
+                      <th>Llamadas Internacionales</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.communication_network.nodes.map((node, index) => (
+                      <tr key={index}>
+                        <td><strong>{node.id}</strong></td>
+                        <td>{node.contacts}</td>
+                        <td>{node.encrypted_msgs}</td>
+                        <td>{node.international_calls}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {data.communication_network.connections && (
+                  <div className="connections-info">
+                    <h6>🔗 Patrones de Comunicación:</h6>
+                    {data.communication_network.connections.map((conn, index) => (
+                      <p key={index}>
+                        <strong>{conn.from}</strong> ↔ <strong>{conn.to}</strong> 
+                        <span className="frequency-badge">
+                          {conn.frequency === 'daily' ? ' (Diario - Alta coordinación)' : 
+                           conn.frequency === 'weekly' ? ' (Semanal - Coordinación regular)' : 
+                           conn.frequency === 'rare' ? ' (Esporádico - Contacto mínimo)' : 
+                           ` (${conn.frequency})`}
+                        </span>
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
 
@@ -880,15 +922,20 @@ const ExercisePlayer = () => {
 
             {data.contracts && (
               <div className="data-display">
-                <h5>📋 Plataformas de Inversión:</h5>
+                <h5>📋 Smart Contracts:</h5>
                 {data.contracts.map((contract, index) => (
                   <div key={index} className="contract-card">
                     <h6>Plataforma {contract.address}</h6>
-                    <p><strong>Tipo:</strong> {contract.type}</p>
-                    <p><strong>Retornos:</strong> {contract.returns}</p>
                     <p><strong>Descripción:</strong> {contract.description}</p>
                     {contract.functions && (
-                      <p><strong>Funciones:</strong> {contract.functions.join(', ')}</p>
+                      <div>
+                        <p><strong>Funciones disponibles:</strong></p>
+                        <ul className="functions-list">
+                          {contract.functions.map((func, idx) => (
+                            <li key={idx}><code>{func}</code></li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -1171,70 +1218,6 @@ const ExercisePlayer = () => {
                         <td>{record.crime}</td>
                         <td>{record.date}</td>
                         <td>{record.location}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {data.communication_network && (
-              <div className="data-display">
-                <h5>📡 Red de Comunicaciones:</h5>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Nodo</th>
-                      <th>Contactos</th>
-                      <th>Mensajes Cifrados</th>
-                      <th>Llamadas Internacionales</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.communication_network.nodes.map((node, index) => (
-                      <tr key={index} className={node.contacts > 10 && node.international_calls === 0 ? 'high-risk' : node.international_calls > 15 ? 'suspicious' : ''}>
-                        <td><strong>{node.id}</strong></td>
-                        <td>{node.contacts}</td>
-                        <td>{node.encrypted_msgs}</td>
-                        <td>{node.international_calls}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {data.communication_network.connections && (
-                  <div className="connections-info">
-                    <h6>🔗 Conexiones:</h6>
-                    {data.communication_network.connections.map((conn, index) => (
-                      <p key={index}>{conn.from} ↔ {conn.to} ({conn.frequency})</p>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {data.crime_scenes && (
-              <div className="data-display">
-                <h5>🏠 Escenas del Crimen:</h5>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Crimen</th>
-                      <th>Método</th>
-                      <th>Hora</th>
-                      <th>Objetos Robados</th>
-                      <th>Evidencia</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.crime_scenes.map((scene, index) => (
-                      <tr key={index} className={scene.method === 'Ventana forzada' && scene.evidence.includes('Guantes latex') ? 'pattern-match' : ''}>
-                        <td><strong>{scene.id}</strong></td>
-                        <td>{scene.crime}</td>
-                        <td>{scene.method}</td>
-                        <td>{scene.time}</td>
-                        <td>{scene.items}</td>
-                        <td>{scene.evidence}</td>
                       </tr>
                     ))}
                   </tbody>

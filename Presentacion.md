@@ -110,3 +110,13 @@ Se proponen planes de acción:
 
 Finalmente, se afirma que la IA transformará la seguridad pública, mejorando la eficiencia y la prevención del delito, pero requiere un enfoque ético, responsable y trazable.
 
+
+
+
+
+
+
+
+Quierp que analices con mcp el siguiente ejercicio http://localhost:5173/exercises/54 si te pide loguarte es ivan.agustin.95@gmail.com y la contraseña 
+  es Vortex733- y fijate, que no hay informacion suficiente para que el usuario pueda saber la respuesta. Es el mismo problema que tuve con otro ejercicio
+   esta documentado aca '/Users/macbook/Documents/DNGBDS juego/cyberdetective-academy/docs/exercise-rendering-bug-fix.md'
