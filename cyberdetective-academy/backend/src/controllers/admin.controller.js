@@ -271,9 +271,9 @@ const adminController = {
       
       // Actualizar el estado de los equipos
       const result = await db.query(`
-        UPDATE game_state 
-        SET teams_enabled = $1,
-            updated_at = CURRENT_TIMESTAMP
+        UPDATE system_config 
+        SET teams_enabled = $1
+        WHERE id = 1
         RETURNING teams_enabled
       `, [enabled]);
       
