@@ -11,7 +11,11 @@ export default defineConfig({
   },
   preview: {
     port: process.env.PORT || 4173,
-    host: '0.0.0.0'
+    host: '0.0.0.0',
+    allowedHosts: [
+      'healthcheck.railway.app',
+      '.railway.app'
+    ]
   },
   build: {
     outDir: 'dist',
