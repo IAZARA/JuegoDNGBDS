@@ -323,6 +323,103 @@ const adminController = {
     }
   },
 
+  async getAllUsers(req, res) {
+    try {
+      const { page = 1, limit = 50, search = '', sortBy = 'created_at', sortOrder = 'DESC' } = req.query;
+      
+      let query = `
+        SELECT 
+          u.id,
+          u.username,
+          u.email,
+          u.full_name,
+          u.avatar_url,
+          u.total_points,
+          u.level,
+          u.created_at,
+          u.updated_at,
+          COUNT(ea.id) as exercises_completed,
+          COALESCE(AVG(ea.time_taken), 0) as average_time,
+          t.name as team_name,
+          tm.role as team_role
+        FROM users u
+        LEFT JOIN exercise_attempts ea ON u.id = ea.user_id AND ea.is_correct = true
+        LEFT JOIN team_members tm ON u.id = tm.user_id
+        LEFT JOIN teams t ON tm.team_id = t.id AND t.is_active = true
+        WHERE 1=1
+      `;
+      
+      const params = [];
+      let paramIndex = 1;
+      
+      // Filtro de búsqueda
+      if (search) {
+        query += ` AND (u.username ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex} OR u.full_name ILIKE $${paramIndex})`;
+        params.push(`%${search}%`);
+        paramIndex++;
+      }
+      
+      query += ` GROUP BY u.id, t.name, tm.role`;
+      
+      // Ordenamiento
+      const validSortFields = ['username', 'email', 'total_points', 'level', 'created_at'];
+      const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
+      const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+      
+      query += ` ORDER BY u.${sortField} ${order}`;
+      
+      // Paginación
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+      query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+      params.push(parseInt(limit), offset);
+      
+      const result = await db.query(query, params);
+      
+      // Obtener total de usuarios para paginación
+      let countQuery = 'SELECT COUNT(*) as total FROM users WHERE 1=1';
+      const countParams = [];
+      
+      if (search) {
+        countQuery += ` AND (username ILIKE $1 OR email ILIKE $1 OR full_name ILIKE $1)`;
+        countParams.push(`%${search}%`);
+      }
+      
+      const countResult = await db.query(countQuery, countParams);
+      const totalUsers = parseInt(countResult.rows[0].total);
+      
+      // Formatear datos
+      const users = result.rows.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.full_name,
+        avatarUrl: user.avatar_url,
+        totalPoints: user.total_points,
+        level: user.level,
+        exercisesCompleted: parseInt(user.exercises_completed),
+        averageTime: parseFloat(user.average_time),
+        teamName: user.team_name,
+        teamRole: user.team_role,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at
+      }));
+      
+      res.json({
+        users,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalUsers / parseInt(limit)),
+          totalUsers,
+          usersPerPage: parseInt(limit)
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error obteniendo usuarios:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  },
+
   async getPresenterGuide(req, res) {
     try {
       const { category, difficulty, search } = req.query;

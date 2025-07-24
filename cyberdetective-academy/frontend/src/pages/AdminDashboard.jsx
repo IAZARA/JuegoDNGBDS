@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import PresenterGuide from '../components/admin/PresenterGuide';
+import UserManagement from '../components/admin/UserManagement';
 import '../styles/admin.css';
 
 function AdminDashboard() {
@@ -11,7 +12,7 @@ function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [resetLink, setResetLink] = useState('');
   const [showConfirmReset, setShowConfirmReset] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'guide'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'guide', or 'users'
   const [teamsEnabled, setTeamsEnabled] = useState(true);
   const navigate = useNavigate();
 
@@ -154,6 +155,12 @@ function AdminDashboard() {
             className={`admin-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
           >
             🏠 Dashboard
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}
+          >
+            👥 Usuarios
           </button>
           <button
             onClick={() => setActiveTab('guide')}
@@ -308,6 +315,11 @@ function AdminDashboard() {
               </div>
             </div>
           </>
+        )}
+
+        {/* Gestión de Usuarios */}
+        {activeTab === 'users' && (
+          <UserManagement />
         )}
 
         {/* Guía del Presentador */}

@@ -13,6 +13,7 @@ router.post('/reset-game', adminAuth, adminController.resetAllGame);
 router.post('/generate-reset-link', adminAuth, adminController.generateResetLink);
 router.post('/toggle-teams', adminAuth, adminController.toggleTeams);
 router.get('/teams-status', adminAuth, adminController.getTeamsStatus);
+router.get('/users', adminAuth, adminController.getAllUsers);
 
 // Reinicio vía link (no requiere autenticación, el token es la autenticación)
 router.post('/reset-via-link/:token', adminController.resetViaLink);
