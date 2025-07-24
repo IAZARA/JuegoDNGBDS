@@ -6,12 +6,10 @@ async function autoSetupDatabase() {
   try {
     console.log('🚀 Verificando setup automático de base de datos...');
     
-    // Verificar si ya está configurada
+    // Verificar si ya está configurada (solo system_config es crítico)
     try {
-      await pool.query('SELECT 1 FROM exercises LIMIT 1');
       await pool.query('SELECT 1 FROM system_config LIMIT 1');
-      console.log('✅ Base de datos ya configurada');
-      return;
+      console.log('✅ system_config existe, continuando setup...');
     } catch (error) {
       console.log('🔧 Inicializando base de datos automáticamente...');
     }
@@ -45,25 +43,34 @@ async function autoSetupDatabase() {
       }
     }
     
-    // Asegurar system_config con teams_enabled
+    // NUCLEAR FIX: Borrar y recrear system_config
     try {
+      console.log('🔥 NUCLEAR FIX: Recreando system_config...');
+      
+      // Borrar tabla si existe
+      await pool.query('DROP TABLE IF EXISTS system_config CASCADE');
+      
+      // Recrear desde cero
       await pool.query(`
-        CREATE TABLE IF NOT EXISTS system_config (
+        CREATE TABLE system_config (
           id SERIAL PRIMARY KEY,
           teams_enabled BOOLEAN DEFAULT true,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
       
+      // Insertar dato inicial
       await pool.query(`
         INSERT INTO system_config (id, teams_enabled) 
-        VALUES (1, true) 
-        ON CONFLICT (id) DO NOTHING
+        VALUES (1, true)
       `);
       
-      console.log('✅ system_config configurada');
+      // Verificar que funcionó
+      const result = await pool.query('SELECT teams_enabled FROM system_config WHERE id = 1');
+      console.log(`✅ system_config recreada. teams_enabled = ${result.rows[0]?.teams_enabled}`);
+      
     } catch (err) {
-      console.log(`⚠️  system_config: ${err.message}`);
+      console.log(`❌ NUCLEAR FIX FAILED: ${err.message}`);
     }
     
     console.log('🎉 Setup automático completado');
