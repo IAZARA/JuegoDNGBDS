@@ -561,6 +561,77 @@ const adminController = {
       console.error('Error obteniendo guía del presentador:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
     }
+  },
+
+  async deleteUser(req, res) {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId || isNaN(userId)) {
+        return res.status(400).json({ 
+          message: 'ID de usuario inválido' 
+        });
+      }
+
+      // Verificar que el usuario existe
+      const userCheck = await db.query('SELECT id, username, email FROM users WHERE id = $1', [userId]);
+      
+      if (userCheck.rows.length === 0) {
+        return res.status(404).json({ 
+          message: 'Usuario no encontrado' 
+        });
+      }
+
+      const userToDelete = userCheck.rows[0];
+
+      // Iniciar transacción para asegurar integridad
+      await db.query('BEGIN');
+
+      try {
+        // Las foreign keys con CASCADE se encargarán automáticamente de:
+        // - exercise_attempts
+        // - team_members  
+        // - team_invitations
+        // - leaderboard
+        // - user_badges
+
+        // Eliminar el usuario (esto activará CASCADE deletes)
+        await db.query('DELETE FROM users WHERE id = $1', [userId]);
+
+        await db.query('COMMIT');
+
+        console.log(`✅ Usuario eliminado: ${userToDelete.username} (${userToDelete.email})`);
+
+        // Emitir evento Socket.io para notificar cambios
+        const io = req.app.get('io');
+        if (io) {
+          io.emit('userDeleted', {
+            userId: parseInt(userId),
+            username: userToDelete.username,
+            timestamp: new Date()
+          });
+        }
+
+        res.json({
+          message: `Usuario ${userToDelete.username} eliminado exitosamente`,
+          deletedUser: {
+            id: userToDelete.id,
+            username: userToDelete.username,
+            email: userToDelete.email
+          }
+        });
+
+      } catch (error) {
+        await db.query('ROLLBACK');
+        throw error;
+      }
+
+    } catch (error) {
+      console.error('Error eliminando usuario:', error);
+      res.status(500).json({ 
+        message: 'Error interno del servidor al eliminar usuario' 
+      });
+    }
   }
 };
 

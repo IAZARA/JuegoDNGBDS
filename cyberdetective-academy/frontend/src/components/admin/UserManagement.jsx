@@ -88,6 +88,51 @@ const UserManagement = () => {
     return sortOrder === 'ASC' ? '↑' : '↓';
   };
 
+  const deleteUser = async (userId, username) => {
+    const confirmed = window.confirm(
+      `⚠️ ¿Estás seguro de que quieres eliminar al usuario "${username}"?\n\n` +
+      `Esta acción:\n` +
+      `• Eliminará todos los datos del usuario (ejercicios, puntos, etc.)\n` +
+      `• Removerá al usuario de cualquier equipo\n` +
+      `• NO se puede deshacer\n\n` +
+      `Escribe "CONFIRMAR" para proceder:`
+    );
+
+    if (!confirmed) return;
+
+    const doubleConfirm = window.prompt(
+      `Para confirmar la eliminación de "${username}", escribe: CONFIRMAR`
+    );
+
+    if (doubleConfirm !== 'CONFIRMAR') {
+      toast.error('Eliminación cancelada - confirmación incorrecta');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      await api.delete(`/admin/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success(`Usuario ${username} eliminado exitosamente`);
+      
+      // Recargar la lista de usuarios
+      fetchUsers();
+      
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      
+      if (error.response?.status === 404) {
+        toast.error('Usuario no encontrado');
+      } else if (error.response?.status === 400) {
+        toast.error('ID de usuario inválido');
+      } else {
+        toast.error('Error al eliminar usuario');
+      }
+    }
+  };
+
   if (loading && users.length === 0) {
     return (
       <div className="admin-loading">
@@ -150,6 +195,7 @@ const UserManagement = () => {
               <th onClick={() => handleSort('created_at')} className="sortable">
                 Registro {getSortIcon('created_at')}
               </th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -195,6 +241,15 @@ const UserManagement = () => {
                   )}
                 </td>
                 <td className="date-cell">{formatDate(user.createdAt)}</td>
+                <td className="actions-cell">
+                  <button
+                    onClick={() => deleteUser(user.id, user.username)}
+                    className="delete-user-btn"
+                    title={`Eliminar usuario ${user.username}`}
+                  >
+                    🗑️
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
