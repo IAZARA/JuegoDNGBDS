@@ -5,7 +5,7 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const { Server } = require('socket.io');
 const http = require('http');
-const { autoSetupDatabase } = require('./db/auto-setup');
+const { completeSetupDatabase } = require('./db/complete-setup');
 
 dotenv.config();
 
@@ -73,9 +73,9 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, async () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
   
-  // Auto-setup de base de datos en Railway
+  // Setup completo de base de datos en Railway
   if (process.env.NODE_ENV === 'production') {
-    await autoSetupDatabase();
+    await completeSetupDatabase();
   }
 });
 
