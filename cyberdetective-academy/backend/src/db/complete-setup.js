@@ -78,6 +78,26 @@ async function completeSetupDatabase() {
       }
     }
     
+    // NUCLEAR FIX: Asegurar tabla users existe
+    try {
+      await pool.query('DROP TABLE IF EXISTS users CASCADE');
+      await pool.query(`
+        CREATE TABLE users (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          password VARCHAR(255) NOT NULL,
+          points INTEGER DEFAULT 0,
+          level VARCHAR(50) DEFAULT 'Detective Junior',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('✅ Tabla users NUCLEAR FIX aplicado');
+    } catch (err) {
+      console.log(`❌ users NUCLEAR FIX falló: ${err.message}`);
+    }
+    
     // Asegurar system_config (crítico para teams-enabled)
     try {
       await pool.query('DROP TABLE IF EXISTS system_config CASCADE');
