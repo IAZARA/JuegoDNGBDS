@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import exerciseService from '../../services/exerciseService';
-import toast from 'react-hot-toast';
+import toast from '../../utils/toast';
 
 const ExercisePlayer = () => {
   const { id } = useParams();

@@ -58,5 +58,8 @@ temp/
 coverage/
 *.lcov
 
+.data_backup.sql
+.schema_backup.sql
+
 # Local Claude settings (keep private)
 .claude/settings.local.json

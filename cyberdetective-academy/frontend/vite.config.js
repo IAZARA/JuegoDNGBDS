@@ -19,6 +19,16 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      keep_fnames: true,
+      mangle: {
+        reserved: ['toast', 'info', 'error', 'success', 'warning']
+      }
+    }
+  },
+  optimizeDeps: {
+    include: ['react-hot-toast']
   }
 })
