@@ -48,6 +48,7 @@ app.use('/api/teams', require('./routes/teams.routes'));
 app.use('/api/invitations', require('./routes/invitations.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
 app.use('/api/public', require('./routes/public.routes'));
+app.use('/api/migrate', require('./routes/migrate'));
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
