@@ -54,38 +54,43 @@ class Exercise {
     const normalizedAnswer = userAnswer.toLowerCase().trim();
     const correctAnswer = solution.correct_answer.toLowerCase().trim();
     
-    // Validación según el tipo de ejercicio
-    switch (exercise.type) {
-      case 'multiple_choice':
-        isCorrect = normalizedAnswer === correctAnswer;
-        break;
-        
-      case 'data_analysis':
-        // Para análisis de datos, puede aceptar múltiples respuestas válidas
-        const validAnswers = solution.valid_answers || [correctAnswer];
-        isCorrect = validAnswers.some(answer => 
-          normalizedAnswer === answer.toLowerCase().trim()
-        );
-        break;
-        
-      case 'metadata_analysis':
-        isCorrect = normalizedAnswer === correctAnswer;
-        break;
-        
-      case 'text_input':
-        // Validación inteligente y flexible para texto libre
-        isCorrect = this.validateTextInput(normalizedAnswer, correctAnswer, solution);
-        break;
-        
-      case 'numeric':
-        const userNumber = parseFloat(userAnswer);
-        const correctNumber = parseFloat(solution.correct_answer);
-        const tolerance = solution.tolerance || 0.01;
-        isCorrect = Math.abs(userNumber - correctNumber) <= tolerance;
-        break;
-        
-      default:
-        isCorrect = normalizedAnswer === correctAnswer;
+    // Usar modo de validación específico si está definido
+    if (solution.validation_mode) {
+      isCorrect = this.validateByMode(normalizedAnswer, correctAnswer, solution);
+    } else {
+      // Validación según el tipo de ejercicio
+      switch (exercise.type) {
+        case 'multiple_choice':
+          isCorrect = normalizedAnswer === correctAnswer;
+          break;
+          
+        case 'data_analysis':
+          // Para análisis de datos, puede aceptar múltiples respuestas válidas
+          const validAnswers = solution.valid_answers || [correctAnswer];
+          isCorrect = validAnswers.some(answer => 
+            normalizedAnswer === answer.toLowerCase().trim()
+          );
+          break;
+          
+        case 'metadata_analysis':
+          isCorrect = normalizedAnswer === correctAnswer;
+          break;
+          
+        case 'text_input':
+          // Validación inteligente y flexible para texto libre
+          isCorrect = this.validateTextInput(normalizedAnswer, correctAnswer, solution);
+          break;
+          
+        case 'numeric':
+          const userNumber = parseFloat(userAnswer);
+          const correctNumber = parseFloat(solution.correct_answer);
+          const tolerance = solution.tolerance || 0.01;
+          isCorrect = Math.abs(userNumber - correctNumber) <= tolerance;
+          break;
+          
+        default:
+          isCorrect = normalizedAnswer === correctAnswer;
+      }
     }
     
     return {
@@ -93,6 +98,137 @@ class Exercise {
       explanation: solution.explanation,
       correctAnswer: solution.correct_answer
     };
+  }
+
+  static validateByMode(userAnswer, correctAnswer, solution) {
+    const mode = solution.validation_mode;
+    
+    switch (mode) {
+      case 'name_only':
+        // Solo valida el nombre/identificador principal, ignora texto adicional
+        return this.validateNameOnly(userAnswer, correctAnswer, solution);
+        
+      case 'flexible_list':
+        // Acepta listas con diferentes formatos y ordenamientos
+        return this.validateFlexibleList(userAnswer, correctAnswer, solution);
+        
+      case 'key_value_pairs':
+        // Acepta pares clave-valor con formato flexible
+        return this.validateKeyValuePairs(userAnswer, correctAnswer, solution);
+        
+      default:
+        // Si no hay modo específico, usar validación estándar
+        return this.validateTextInput(userAnswer, correctAnswer, solution);
+    }
+  }
+
+  static validateNameOnly(userAnswer, correctAnswer, solution) {
+    // Extraer solo el nombre/identificador principal de la respuesta correcta
+    const extractName = (text) => {
+      // Remover frases comunes como "es empresa fantasma", "es sospechoso", etc.
+      return text
+        .replace(/\b(es|son|una?|el|la|los|las|empresa|fantasma|sospechoso[as]?|falso[as]?|duplicado[as]?)\b/gi, '')
+        .trim()
+        .replace(/\s+/g, ' ');
+    };
+    
+    const userNameOnly = extractName(userAnswer);
+    const correctNameOnly = extractName(correctAnswer);
+    
+    // También verificar las respuestas válidas alternativas
+    if (solution.valid_answers) {
+      const validNames = solution.valid_answers.map(ans => extractName(ans.toLowerCase()));
+      if (validNames.some(name => userNameOnly === name || userAnswer === name.toLowerCase())) {
+        return true;
+      }
+    }
+    
+    // Coincidencia exacta o si el usuario escribió el nombre correcto
+    return userNameOnly === correctNameOnly || userAnswer === correctNameOnly;
+  }
+
+  static validateFlexibleList(userAnswer, correctAnswer, solution) {
+    // Normalizar y extraer elementos de una lista
+    const extractElements = (text) => {
+      // Remover palabras clave como "Líder:", "Operativos:", etc.
+      const cleaned = text
+        .replace(/\b(líder|lider|leader|operativo[s]?|ops?|miembro[s]?)\b/gi, '')
+        .replace(/[:;]/g, ','); // Convertir : y ; a comas
+      
+      // Extraer elementos (letras, números o códigos)
+      const elements = cleaned
+        .split(/[,\s]+/)
+        .filter(e => e.match(/^[A-Za-z0-9]+$/))
+        .map(e => e.toUpperCase())
+        .sort(); // Ordenar para comparación independiente del orden
+      
+      return elements;
+    };
+    
+    const userElements = extractElements(userAnswer);
+    const correctElements = extractElements(correctAnswer);
+    
+    // Verificar si todos los elementos correctos están presentes
+    if (correctElements.length === 0) return false;
+    
+    const allElementsMatch = correctElements.every(elem => 
+      userElements.includes(elem)
+    );
+    
+    // También aceptar si el usuario proporcionó los elementos correctos aunque haya extras
+    return allElementsMatch && userElements.length >= correctElements.length;
+  }
+
+  static validateKeyValuePairs(userAnswer, correctAnswer, solution) {
+    // Extraer pares clave-valor de formato flexible
+    const extractPairs = (text) => {
+      const pairs = {};
+      
+      // Patrones para diferentes formatos: "clave: valor", "clave=valor", "clave valor"
+      const patterns = [
+        /(\w+)\s*[:=]\s*([^,;]+)/g,
+        /(\w+)\s+(\w+)/g
+      ];
+      
+      patterns.forEach(pattern => {
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          const key = match[1].toLowerCase();
+          const value = match[2].trim().toUpperCase();
+          pairs[key] = value;
+        }
+      });
+      
+      return pairs;
+    };
+    
+    const userPairs = extractPairs(userAnswer);
+    const correctPairs = extractPairs(correctAnswer);
+    
+    // Verificar que todos los pares correctos estén presentes
+    for (const [key, value] of Object.entries(correctPairs)) {
+      if (!userPairs[key] || userPairs[key] !== value) {
+        // Intentar con sinónimos de claves
+        const keySynonyms = {
+          'lider': ['leader', 'jefe', 'boss'],
+          'operativo': ['op', 'ops', 'operativos', 'operative']
+        };
+        
+        let found = false;
+        if (keySynonyms[key]) {
+          for (const synonym of keySynonyms[key]) {
+            if (userPairs[synonym] === value) {
+              found = true;
+              break;
+            }
+          }
+        }
+        
+        if (!found) return false;
+      }
+    }
+    
+    return true;
   }
 
   static validateTextInput(userAnswer, correctAnswer, solution) {

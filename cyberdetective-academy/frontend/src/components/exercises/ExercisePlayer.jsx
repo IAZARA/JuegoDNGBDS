@@ -192,24 +192,39 @@ const ExercisePlayer = () => {
     const data = exercise.problem_data;
     const question = data?.question?.toLowerCase() || '';
     const category = exercise.category?.toLowerCase() || '';
+    const title = exercise.title?.toLowerCase() || '';
     
     // Placeholders específicos basados en el contenido
-    if (question.includes('zona') && question.includes('horario')) {
+    if (title.includes('empresas fantasma')) {
+      return 'Ej: Global Trading LLC (solo el nombre de la empresa)';
+    } else if (title.includes('células terroristas')) {
+      return 'Ej: B, C, E o líder B operativos C E';
+    } else if (title.includes('registros duplicados')) {
+      return 'Ej: S001-S003 S002-S005 (solo los códigos)';
+    } else if (title.includes('valores atípicos')) {
+      return 'Ej: T003 T005 (solo los códigos de transacción)';
+    } else if (title.includes('evidencia digital')) {
+      return 'Ej: EV002 EV003 EV005 (solo los códigos)';
+    } else if (title.includes('smart contracts')) {
+      return 'Ej: 0xC3D4 o Plataforma 0xC3D4';
+    } else if (title.includes('lavado') && title.includes('algoritmos')) {
+      return 'Ej: T001 T002 T003 (solo los IDs de transacción)';
+    } else if (question.includes('zona') && question.includes('horario')) {
       return 'Ej: Centro, 22:00-02:00, viernes';
     } else if (question.includes('ip') || category.includes('redes')) {
       return 'Ej: 192.168.1.100 o dirección IP completa';
     } else if (question.includes('bitcoin') || question.includes('billetera') || category.includes('blockchain')) {
-      return 'Ej: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa (dirección completa)';
+      return 'Ej: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
     } else if (question.includes('líder') || question.includes('miembro')) {
-      return 'Ej: A, B, C (identificador del nodo)';
+      return 'Ej: B C E (letras separadas por espacios)';
     } else if (question.includes('transacción') && question.includes('id')) {
-      return 'Ej: T001, T002 (ID de transacción)';
+      return 'Ej: T001 T002 (IDs separados por espacios)';
     } else if (question.includes('documento') || question.includes('falso')) {
-      return 'Ej: DOC001, DOC002 (ID del documento)';
+      return 'Ej: DOC001 DOC002 (solo los IDs)';
     } else if (question.includes('email') || question.includes('phishing')) {
-      return 'Ej: Email 1, Email 2 (número de email)';
+      return 'Ej: Email 2 (número del email sospechoso)';
     } else if (question.includes('patrón') || question.includes('lavado')) {
-      return 'Ej: Estructuración, Smurfing (tipo de patrón)';
+      return 'Ej: Estructuración o T001 T002 T003';
     }
     
     return 'Ingresa tu respuesta aquí...';
